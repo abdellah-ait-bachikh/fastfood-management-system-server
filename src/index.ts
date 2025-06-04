@@ -1,16 +1,26 @@
 import express, { Request, Response } from "express";
+import cors, { CorsOptions } from "cors";
+import { config } from "dotenv";
+
 const app = express();
 
-app.get("/", (req: Request, res: Response) => {
-  res.json({ message: "hello world" });
-});
+//use dotenv variables
+config().parsed;
 
-const port = 5000;
+const corsOption: CorsOptions = {
+  origin: "*",
+  methods: ["POST", "Get", "PUT", "PATCH", "DELETE"],
+};
 
+//globale middlwares
+app.use(cors(corsOption));
+app.use(express.json());
 
-export const startServer =()=>{
-app.listen(port, () => {
-  console.log(`server raning in port ${port}`);
-});
-}
-startServer()
+const port = process.env.PORT;
+
+export const startServer = () => {
+  app.listen(port, () => {
+    console.log(`server raning in port ${port}`);
+  });
+};
+startServer();
