@@ -59,13 +59,17 @@ async function main() {
   ]);
 
   console.log("🍔 Seeding products...");
-  const productsData = Array.from({ length: 10 }).map((_, i) => ({
-    name: faker.commerce.productName(),
-    price: parseFloat(faker.commerce.price({ min: 5, max: 15 })),
-    position: i + 1,
-    isPublish: true,
-    categoryId: faker.helpers.arrayElement(categories).id,
-  }));
+const productsData = Array.from({ length: 10 }).map((_, i) => ({
+  name: faker.commerce.productName(),
+  price: parseFloat(
+    (Math.random() < 0.5
+      ? faker.number.int({ min: 5, max: 15 }).toString()
+      : faker.number.float({ min: 5, max: 15}).toFixed(2))
+  ),
+  position: i + 1,
+  isPublish: true,
+  categoryId: faker.helpers.arrayElement(categories).id,
+}));
 
   const products = await prisma.product.createMany({
     data: productsData,
@@ -113,7 +117,7 @@ async function main() {
   const offers = [offer1, offer2, offer3];
 
   console.log("💳 Seeding paymentProducts...");
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 2; i++) {
     const selected = faker.helpers.arrayElements(allProducts, 2);
     const detail = selected.map((p) => ({
       productId: p.id,
@@ -152,7 +156,7 @@ async function main() {
   }
 
   console.log("💳 Seeding paymentOffers...");
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 2; i++) {
     const selectedOffer = faker.helpers.arrayElement(offers);
     const quantity = faker.number.int({ min: 1, max: 3 });
     const total = quantity * selectedOffer.price;

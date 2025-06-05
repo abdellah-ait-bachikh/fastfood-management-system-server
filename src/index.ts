@@ -1,6 +1,8 @@
 import express, { Request, Response } from "express";
 import cors, { CorsOptions } from "cors";
 import { config } from "dotenv";
+import { errorHandler } from "./moddlewares/errorHandler";
+import homeRouter from "./routers/home.router";
 
 const app = express();
 
@@ -15,6 +17,11 @@ const corsOption: CorsOptions = {
 //globale middlwares
 app.use(cors(corsOption));
 app.use(express.json());
+
+//routes
+app.use("/api/home", homeRouter);
+
+app.use(errorHandler);
 
 const port = process.env.PORT;
 
