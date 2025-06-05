@@ -60,9 +60,11 @@ export const getPopularProducts = asyncHandler(
         _sum: { quantity: "desc" },
       },
     });
-
+    const filteredProducts = topProductsbyQuantity.filter(
+      (item) => item._sum.quantity && item._sum.quantity > 0
+    );
     const result = await Promise.all(
-      topProductsbyQuantity.map(async (item) => {
+      filteredProducts.map(async (item) => {
         const product = await db.product.findUnique({
           where: { id: item.productId },
           select: {
@@ -76,7 +78,7 @@ export const getPopularProducts = asyncHandler(
           },
         });
         if (!product) {
-          return;
+          return null;
         } else {
           return {
             id: item.productId,
@@ -88,6 +90,47 @@ export const getPopularProducts = asyncHandler(
       })
     );
 
-    res.status(200).json(result);
+    res.status(200).json(result.filter(Boolean));
+  }
+);
+
+export const getPopularOffers = asyncHandler(
+  async (req: Request, res: Response) => {
+    const topPopularOffers = await db.paymentOfferDetail.groupBy({
+      by: ["offerId"],
+      _sum: { totalePrice: true, quantity: true },
+      orderBy: {
+        _sum: {
+          quantity: "desc",
+        },
+      },
+    });
+    const filtredOffers = topPopularOffers.filter(
+      (item) => item._sum.quantity && item._sum.quantity > 0
+    );
+    const result = await Promise.all(
+      filtredOffers.map(async (item) => {
+        const offer = await db.offer.findUnique({
+          where: {
+            id: item.offerId,
+          },
+          select: {
+            name: true,
+            imageUri: true,
+          },
+        });
+        if (!offer) {
+          return null;
+        } else {
+          return {
+            id: item.offerId,
+            ...offer,
+            quantity: item._sum.quantity,
+            totaleMoney: item._sum.totalePrice,
+          };
+        }
+      })
+    );
+    res.status(200).json(result.filter(Boolean));
   }
 );
