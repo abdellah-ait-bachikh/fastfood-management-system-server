@@ -39,10 +39,10 @@ export const getSummary = asyncHandler(async (req: Request, res: Response) => {
   });
   const dayCounts = await db.day.count();
   const result = {
-    totalPrice:
+    totaleMoney:
       (totalOfferPaymentsPrice._sum.totalePrice ?? 0) +
       (totlProductPaymentsPrice._sum.totalePrice ?? 0),
-    totalDeleveryPrice:
+    totalDeleveryMoney:
       (totaleProductsDelevryPrice._sum.delevryPrice ?? 0) +
       (totaleOffersDeleveryPrice._sum.delevryPrice ?? 0),
     ordersCount: ProductsPaymentsCount + offersPaymentsCount,
