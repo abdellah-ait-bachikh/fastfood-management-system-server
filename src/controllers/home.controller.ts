@@ -50,3 +50,43 @@ export const getSummary = asyncHandler(async (req: Request, res: Response) => {
   };
   res.status(200).json(result);
 });
+
+export const getPopularProducts = asyncHandler(
+  async (req: Request, res: Response) => {
+    const topProductsbyQuantity = await db.paymentProductDetail.groupBy({
+      by: ["productId"],
+      _sum: { quantity: true },
+      orderBy: {
+        _sum: { quantity: "desc" },
+      },
+    });
+
+    const result = await Promise.all(
+      topProductsbyQuantity.map(async (item) => {
+        const product = await db.product.findUnique({
+          where: { id: item.productId },
+          select: {
+            name: true,
+            category: {
+              select: {
+                name: true,
+                imageUri: true,
+              },
+            },
+          },
+        });
+        if (!product) {
+          return;
+        } else {
+          return {
+            id: item.productId,
+            ...product,
+            quantity: item._sum.quantity,
+          };
+        }
+      })
+    );
+
+    res.status(200).json(result);
+  }
+);
