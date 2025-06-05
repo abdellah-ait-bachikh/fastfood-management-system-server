@@ -55,7 +55,7 @@ export const getPopularProducts = asyncHandler(
   async (req: Request, res: Response) => {
     const topProductsbyQuantity = await db.paymentProductDetail.groupBy({
       by: ["productId"],
-      _sum: { quantity: true },
+      _sum: { quantity: true, totalePrice: true },
       orderBy: {
         _sum: { quantity: "desc" },
       },
@@ -82,6 +82,7 @@ export const getPopularProducts = asyncHandler(
             id: item.productId,
             ...product,
             quantity: item._sum.quantity,
+            totaleMoney: item._sum.totalePrice,
           };
         }
       })
