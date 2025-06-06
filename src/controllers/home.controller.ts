@@ -84,7 +84,7 @@ export const getPopularProducts = asyncHandler(
             id: item.productId,
             ...product,
             quantity: item._sum.quantity,
-            totaleMoney: item._sum.totalePrice,
+            totalMoney: item._sum.totalePrice,
           };
         }
       })
@@ -126,7 +126,7 @@ export const getPopularOffers = asyncHandler(
             id: item.offerId,
             ...offer,
             quantity: item._sum.quantity,
-            totaleMoney: item._sum.totalePrice,
+            totalMoney: item._sum.totalePrice,
           };
         }
       })
