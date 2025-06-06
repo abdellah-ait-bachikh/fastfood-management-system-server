@@ -1,4 +1,4 @@
-import { PrismaClient, UserRole } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { faker } from "@faker-js/faker";
 
 const prisma = new PrismaClient();
@@ -15,8 +15,8 @@ async function main() {
   await prisma.user.deleteMany();
   await prisma.day.deleteMany();
 
-  console.log("👤 Seeding users...");
-  const admin = await prisma.user.create({
+  console.log("👤 Seeding admin user...");
+  await prisma.user.create({
     data: {
       userName: "admin",
       password: "admin123",
@@ -24,14 +24,19 @@ async function main() {
     },
   });
 
-  const deliveryGuy = await prisma.user.create({
-    data: {
-      userName: "livreur1",
-      password: "password",
-      role: "livreur",
-      phoneNumber: faker.phone.number(),
-    },
-  });
+  console.log("👤 Seeding delivery users...");
+  const deliveryGuys = await Promise.all(
+    Array.from({ length: 5 }).map((_, i) =>
+      prisma.user.create({
+        data: {
+          userName: `livreur${i + 1}`,
+          password: "password",
+          role: "livreur",
+          phoneNumber: faker.phone.number(),
+        },
+      })
+    )
+  );
 
   console.log("📅 Creating day...");
   const day = await prisma.day.create({
@@ -59,19 +64,19 @@ async function main() {
   ]);
 
   console.log("🍔 Seeding products...");
-const productsData = Array.from({ length: 10 }).map((_, i) => ({
-  name: faker.commerce.productName(),
-  price: parseFloat(
-    (Math.random() < 0.5
-      ? faker.number.int({ min: 5, max: 15 }).toString()
-      : faker.number.float({ min: 5, max: 15}).toFixed(2))
-  ),
-  position: i + 1,
-  isPublish: true,
-  categoryId: faker.helpers.arrayElement(categories).id,
-}));
+  const productsData = Array.from({ length: 10 }).map((_, i) => ({
+    name: faker.commerce.productName(),
+    price: parseFloat(
+      Math.random() < 0.5
+        ? faker.number.int({ min: 5, max: 15 }).toString()
+        : faker.number.float({ min: 5, max: 15 }).toFixed(2)
+    ),
+    position: i + 1,
+    isPublish: true,
+    categoryId: faker.helpers.arrayElement(categories).id,
+  }));
 
-  const products = await prisma.product.createMany({
+  await prisma.product.createMany({
     data: productsData,
   });
 
@@ -117,15 +122,14 @@ const productsData = Array.from({ length: 10 }).map((_, i) => ({
   const offers = [offer1, offer2, offer3];
 
   console.log("💳 Seeding paymentProducts...");
-  for (let i = 0; i <= 2; i++) {
+  for (let i = 0; i < 20; i++) {
     const selected = faker.helpers.arrayElements(allProducts, 2);
     const detail = selected.map((p) => ({
       productId: p.id,
       quantity: faker.number.int({ min: 1, max: 3 }),
-      totalePrice: 0, // will update below
+      totalePrice: 0,
     }));
 
-    // Compute total (excluding delivery)
     const total = detail.reduce((sum, item) => {
       const product = allProducts.find((p) => p.id === item.productId)!;
       item.totalePrice = product.price * item.quantity;
@@ -143,7 +147,7 @@ const productsData = Array.from({ length: 10 }).map((_, i) => ({
         dayId: day.id,
         ...(withDelivery && {
           delevryPrice: 5,
-          delevryId: deliveryGuy.id,
+          delevryId: faker.helpers.arrayElement(deliveryGuys).id,
         }),
         products: {
           connect: selected.map((p) => ({ id: p.id })),
@@ -156,7 +160,7 @@ const productsData = Array.from({ length: 10 }).map((_, i) => ({
   }
 
   console.log("💳 Seeding paymentOffers...");
-  for (let i = 0; i <= 2; i++) {
+  for (let i = 0; i < 15; i++) {
     const selectedOffer = faker.helpers.arrayElement(offers);
     const quantity = faker.number.int({ min: 1, max: 3 });
     const total = quantity * selectedOffer.price;
@@ -172,7 +176,7 @@ const productsData = Array.from({ length: 10 }).map((_, i) => ({
         dayId: day.id,
         ...(withDelivery && {
           delevryPrice: 5,
-          delevryId: deliveryGuy.id,
+          delevryId: faker.helpers.arrayElement(deliveryGuys).id,
         }),
         offers: {
           connect: [{ id: selectedOffer.id }],
