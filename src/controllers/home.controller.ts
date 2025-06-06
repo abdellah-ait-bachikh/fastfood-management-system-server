@@ -134,3 +134,53 @@ export const getPopularOffers = asyncHandler(
     res.status(200).json(result.filter(Boolean));
   }
 );
+
+export const getTopRankingDelevery = asyncHandler(
+  async (req: Request, res: Response) => {
+    const deleverys = await db.user.findMany({
+      where: { role: "livreur" },
+      select: {
+        id: true,
+        userName: true,
+      },
+    });
+    const deleverysWithTotaleMoney = await Promise.all(
+      deleverys.map(async (item) => {
+        const delevryWithTotaleMoneyPaymentsProducts =
+          await db.paymentProduct.aggregate({
+            where: { delevryId: item.id },
+            _sum: {
+              delevryPrice: true,
+            },
+          });
+        const delevryWithTotaleMoneyPaymentsOffers =
+          await db.paymentOffer.aggregate({
+            where: {
+              delevryId: item.id,
+            },
+            _sum: {
+              delevryPrice: true,
+            },
+          });
+        const totalePaymentsProducts = await db.paymentProduct.count({
+          where: {
+            delevryId: item.id,
+          },
+        });
+        const totalePaymentsOffers = await db.paymentOffer.count({
+          where: {
+            delevryId: item.id,
+          },
+        });
+        return {
+          ...item,
+          totalMoeny:
+            (delevryWithTotaleMoneyPaymentsProducts._sum.delevryPrice ?? 0) +
+            (delevryWithTotaleMoneyPaymentsOffers._sum.delevryPrice ?? 0),
+          totalePayments: totalePaymentsProducts + totalePaymentsOffers,
+        };
+      })
+    );
+    res.status(200).json(deleverysWithTotaleMoney);
+  }
+);
