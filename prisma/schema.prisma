@@ -78,13 +78,15 @@ model PaymentProduct {
 }
 
 model PaymentProductDetail {
-  id          Int            @id @default(autoincrement())
-  productId   Int
-  product     Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
-  paymentProductId   Int
-  paymentProduct     PaymentProduct @relation(fields: [paymentProductId], references: [id], onDelete: Cascade)
-  quantity    Int            @default(1)
-  totalePrice Float
+  id               Int            @id @default(autoincrement())
+  productId        Int
+  product          Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  paymentProductId Int
+  paymentProduct   PaymentProduct @relation(fields: [paymentProductId], references: [id], onDelete: Cascade)
+  quantity         Int            @default(1)
+  totalePrice      Float
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
 }
 
 model Offer {
@@ -122,13 +124,15 @@ model PaymentOffer {
 }
 
 model PaymentOfferDetail {
-  id          Int          @id @default(autoincrement())
-  offerId     Int
-  offer       Offer        @relation(fields: [offerId], references: [id], onDelete: Cascade)
-  paymentOfferId   Int
-  paymentOffer     PaymentOffer @relation(fields: [paymentOfferId], references: [id], onDelete: Cascade)
-  quantity    Int          @default(1)
-  totalePrice Float
+  id             Int          @id @default(autoincrement())
+  offerId        Int
+  offer          Offer        @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  paymentOfferId Int
+  paymentOffer   PaymentOffer @relation(fields: [paymentOfferId], references: [id], onDelete: Cascade)
+  quantity       Int          @default(1)
+  totalePrice    Float
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 }
 
 model Day {

@@ -117,7 +117,7 @@ const productsData = Array.from({ length: 10 }).map((_, i) => ({
   const offers = [offer1, offer2, offer3];
 
   console.log("💳 Seeding paymentProducts...");
-  for (let i = 0; i < 2; i++) {
+  for (let i = 0; i <= 2; i++) {
     const selected = faker.helpers.arrayElements(allProducts, 2);
     const detail = selected.map((p) => ({
       productId: p.id,
@@ -156,7 +156,7 @@ const productsData = Array.from({ length: 10 }).map((_, i) => ({
   }
 
   console.log("💳 Seeding paymentOffers...");
-  for (let i = 0; i < 2; i++) {
+  for (let i = 0; i <= 2; i++) {
     const selectedOffer = faker.helpers.arrayElement(offers);
     const quantity = faker.number.int({ min: 1, max: 3 });
     const total = quantity * selectedOffer.price;
