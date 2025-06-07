@@ -2,7 +2,21 @@ import { Request, Response } from "express";
 import { asyncHandler } from "../lib/utils";
 import { db } from "../lib/db";
 
+export const getLastDay = asyncHandler(async (req: Request, res: Response) => {
+  const lastDay = await db.day.findFirst({
+    where: { stopAt: null },
+    orderBy: {
+      startAt: "desc",
+    },
+  });
 
+  if (!lastDay) {
+    res.status(200).json({  day: null });
+    return;
+  }
+
+  res.status(200).json({ day: lastDay });
+});
 
 export const createDay = asyncHandler(async (req: Request, res: Response) => {
   const lastDay = await db.day.findFirst({
