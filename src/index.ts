@@ -3,6 +3,7 @@ import cors, { CorsOptions } from "cors";
 import { config } from "dotenv";
 import { errorHandler } from "./moddlewares/errorHandler";
 import homeRouter from "./routers/home.router";
+import dayRouter from "./routers/dayRouter";
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use(express.json());
 
 //routes
 app.use("/api/home", homeRouter);
+app.use("/api/days", dayRouter);
 
 app.use(errorHandler);
 
