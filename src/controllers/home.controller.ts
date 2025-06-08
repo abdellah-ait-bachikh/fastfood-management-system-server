@@ -9,7 +9,6 @@ export const getSummary = asyncHandler(async (req: Request, res: Response) => {
 
   const startYearDate = new Date(year, 0, 1);
   const endYearDate = new Date(year + 1, 0, 1);
- console.log(yearParam)
   const totlProductPaymentsPrice = await db.paymentProduct.aggregate({
     _sum: {
       totalePrice: true,
