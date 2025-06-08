@@ -58,7 +58,7 @@ export const getSummary = asyncHandler(async (req: Request, res: Response) => {
     },
   });
   const dayCounts = await db.day.count({
-    where: { startAt: { gte: startYearDate, lt: endYearDate } },
+    where: { startAt: { gt: startYearDate, lt: endYearDate } },
   });
   const result = {
     totaleMoney:

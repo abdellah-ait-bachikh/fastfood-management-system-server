@@ -38,12 +38,16 @@ async function main() {
     )
   );
 
-  console.log("📅 Creating day...");
-  const day = await prisma.day.create({
-    data: {
-      startAt: new Date(),
-    },
-  });
+  console.log("📅 Creating multiple days...");
+  const days = await Promise.all(
+    Array.from({ length: 100 }).map(() =>
+      prisma.day.create({
+        data: {
+          startAt: faker.date.between({ from: "2025-01-01T00:00:00.000Z", to: new Date() }),
+        },
+      })
+    )
+  );
 
   console.log("📂 Creating categories...");
   const categories = await prisma.$transaction([
@@ -66,27 +70,20 @@ async function main() {
   console.log("🍔 Seeding products...");
   const productsData = Array.from({ length: 10 }).map((_, i) => ({
     name: faker.commerce.productName(),
-    price: parseFloat(
-      Math.random() < 0.5
-        ? faker.number.int({ min: 5, max: 15 }).toString()
-        : faker.number.float({ min: 5, max: 15 }).toFixed(2)
-    ),
+    price: faker.number.int({ min: 5, max: 15 }), // integers only
     position: i + 1,
     isPublish: true,
     categoryId: faker.helpers.arrayElement(categories).id,
   }));
 
-  await prisma.product.createMany({
-    data: productsData,
-  });
-
+  await prisma.product.createMany({ data: productsData });
   const allProducts = await prisma.product.findMany();
 
   console.log("🎁 Seeding offers...");
   const offer1 = await prisma.offer.create({
     data: {
       name: "Family Feast",
-      price: 22.99,
+      price: 23,
       isPublish: true,
       imageUri: faker.image.url(),
       products: {
@@ -98,7 +95,7 @@ async function main() {
   const offer2 = await prisma.offer.create({
     data: {
       name: "Double Trouble",
-      price: 18.5,
+      price: 18,
       isPublish: true,
       imageUri: faker.image.url(),
       products: {
@@ -110,7 +107,7 @@ async function main() {
   const offer3 = await prisma.offer.create({
     data: {
       name: "Late Night Deal",
-      price: 12.75,
+      price: 13,
       isPublish: true,
       imageUri: faker.image.url(),
       products: {
@@ -121,77 +118,77 @@ async function main() {
 
   const offers = [offer1, offer2, offer3];
 
-  console.log("💳 Seeding paymentProducts...");
-  for (let i = 0; i < 20; i++) {
-    const selected = faker.helpers.arrayElements(allProducts, 2);
-    const detail = selected.map((p) => ({
-      productId: p.id,
-      quantity: faker.number.int({ min: 1, max: 3 }),
-      totalePrice: 0,
-    }));
+  console.log("💳 Seeding 1500 mixed payments...");
 
-    const total = detail.reduce((sum, item) => {
-      const product = allProducts.find((p) => p.id === item.productId)!;
-      item.totalePrice = product.price * item.quantity;
-      return sum + item.totalePrice;
-    }, 0);
-
+  for (let i = 0; i < 1500; i++) {
+    const useOffer = faker.datatype.boolean();
+    const randomDay = faker.helpers.arrayElement(days);
     const withDelivery = faker.datatype.boolean();
+    const deliveryGuy = faker.helpers.arrayElement(deliveryGuys);
 
-    await prisma.paymentProduct.create({
-      data: {
-        dailyNumber: i + 1,
-        totalePrice: total,
-        isPayed: true,
-        clientPhoneNumber: faker.phone.number(),
-        dayId: day.id,
-        ...(withDelivery && {
-          delevryPrice: 5,
-          delevryId: faker.helpers.arrayElement(deliveryGuys).id,
-        }),
-        products: {
-          connect: selected.map((p) => ({ id: p.id })),
-        },
-        detailsProducts: {
-          create: detail,
-        },
-      },
-    });
-  }
+    if (useOffer) {
+      const selectedOffer = faker.helpers.arrayElement(offers);
+      const quantity = faker.number.int({ min: 1, max: 3 });
+      const total = Math.round(quantity * selectedOffer.price);
 
-  console.log("💳 Seeding paymentOffers...");
-  for (let i = 0; i < 15; i++) {
-    const selectedOffer = faker.helpers.arrayElement(offers);
-    const quantity = faker.number.int({ min: 1, max: 3 });
-    const total = quantity * selectedOffer.price;
-
-    const withDelivery = faker.datatype.boolean();
-
-    await prisma.paymentOffer.create({
-      data: {
-        dailyNumber: i + 1,
-        totalePrice: total,
-        isPayed: true,
-        clientPhoneNumber: faker.phone.number(),
-        dayId: day.id,
-        ...(withDelivery && {
-          delevryPrice: 5,
-          delevryId: faker.helpers.arrayElement(deliveryGuys).id,
-        }),
-        offers: {
-          connect: [{ id: selectedOffer.id }],
+      await prisma.paymentOffer.create({
+        data: {
+          dailyNumber: i + 1,
+          totalePrice: total,
+          isPayed: true,
+          clientPhoneNumber: faker.phone.number(),
+          dayId: randomDay.id,
+          ...(withDelivery && {
+            delevryPrice: 5,
+            delevryId: deliveryGuy.id,
+          }),
+          offers: {
+            connect: [{ id: selectedOffer.id }],
+          },
+          detailsOffer: {
+            create: [
+              {
+                offerId: selectedOffer.id,
+                quantity,
+                totalePrice: total,
+              },
+            ],
+          },
         },
-        detailsOffer: {
-          create: [
-            {
-              offerId: selectedOffer.id,
-              quantity,
-              totalePrice: total,
-            },
-          ],
+      });
+    } else {
+      const selected = faker.helpers.arrayElements(allProducts, 2);
+      const detail = selected.map((p) => {
+        const quantity = faker.number.int({ min: 1, max: 3 });
+        return {
+          productId: p.id,
+          quantity,
+          totalePrice: Math.round(p.price * quantity),
+        };
+      });
+
+      const total = detail.reduce((sum, item) => sum + item.totalePrice, 0);
+
+      await prisma.paymentProduct.create({
+        data: {
+          dailyNumber: i + 1,
+          totalePrice: total,
+          isPayed: true,
+          clientPhoneNumber: faker.phone.number(),
+          dayId: randomDay.id,
+          ...(withDelivery && {
+            delevryPrice: 5,
+            delevryId: deliveryGuy.id,
+          }),
+          products: {
+            connect: selected.map((p) => ({ id: p.id })),
+          },
+          detailsProducts: {
+            create: detail,
+          },
         },
-      },
-    });
+      });
+    }
   }
 
   console.log("✅ Seed complete.");
