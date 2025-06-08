@@ -38,16 +38,23 @@ async function main() {
     )
   );
 
-  console.log("📅 Creating multiple days...");
-  const days = await Promise.all(
-    Array.from({ length: 100 }).map(() =>
-      prisma.day.create({
-        data: {
-          startAt: faker.date.between({ from: "2025-01-01T00:00:00.000Z", to: new Date() }),
-        },
-      })
-    )
-  );
+ console.log("📅 Creating multiple days...");
+const days = await Promise.all(
+  Array.from({ length: 100 }).map(() => {
+    const startAt = faker.date.between({
+      from: "2025-01-01T00:00:00.000Z",
+      to: new Date(),
+    });
+    const stopAt = new Date(startAt.getTime() + faker.number.int({ min: 1, max: 6 }) * 60 * 60 * 1000); // +1 to 6 hours
+    return prisma.day.create({
+      data: {
+        startAt,
+        stopAt,
+      },
+    });
+  })
+);
+
 
   console.log("📂 Creating categories...");
   const categories = await prisma.$transaction([

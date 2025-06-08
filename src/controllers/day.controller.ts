@@ -29,11 +29,42 @@ export const createDay = asyncHandler(async (req: Request, res: Response) => {
   const newDay = await db.day.create({
     data: {
       startAt: new Date(),
+    }, include: {
+      paymentsOffers: true,
+      paymentsProducts: true,
+      _count: {
+        select: {
+          paymentsOffers: true,
+          paymentsProducts: true,
+        },
+      },
     },
   });
+   const { paymentsProducts, paymentsOffers, ...rest } = newDay;
+  const totalPaymentsProductsMoney = paymentsProducts.reduce(
+    (sum, paymentProduct) => sum + (paymentProduct.totalePrice || 0),
+    0
+  );
+  const totalPaymentsOffersMoney = paymentsOffers.reduce(
+    (sum, offer) => sum + (offer.totalePrice || 0),
+    0
+  );
+  const totalDeleverysProductsMoney = paymentsProducts.reduce(
+    (sum, paymentProduct) => sum + (paymentProduct.delevryPrice || 0),
+    0
+  );
+  const totalDeleverysOffersMoney = paymentsOffers.reduce(
+    (sum, paymentOffer) => sum + (paymentOffer.delevryPrice || 0),
+    0
+  );
+  const rsult = {
+    ...rest,
+    totalPaymentsMoney: totalPaymentsProductsMoney + totalPaymentsOffersMoney,
+    totalDeleveryMoney: totalDeleverysProductsMoney + totalDeleverysOffersMoney,
+  };
   res
     .status(201)
-    .json({ message: "Journée démarrée avec succès", day: newDay });
+    .json({ message: "Journée démarrée avec succès", day: rsult });
 });
 
 export const stopDay = asyncHandler(async (req: Request, res: Response) => {
@@ -62,11 +93,42 @@ export const stopDay = asyncHandler(async (req: Request, res: Response) => {
   const updatedDay = await db.day.update({
     where: { id: dayId },
     data: { stopAt: new Date() },
+    include: {
+      paymentsOffers: true,
+      paymentsProducts: true,
+      _count: {
+        select: {
+          paymentsOffers: true,
+          paymentsProducts: true,
+        },
+      },
+    },
   });
-
+  const { paymentsProducts, paymentsOffers, ...rest } = updatedDay;
+  const totalPaymentsProductsMoney = paymentsProducts.reduce(
+    (sum, paymentProduct) => sum + (paymentProduct.totalePrice || 0),
+    0
+  );
+  const totalPaymentsOffersMoney = paymentsOffers.reduce(
+    (sum, offer) => sum + (offer.totalePrice || 0),
+    0
+  );
+  const totalDeleverysProductsMoney = paymentsProducts.reduce(
+    (sum, paymentProduct) => sum + (paymentProduct.delevryPrice || 0),
+    0
+  );
+  const totalDeleverysOffersMoney = paymentsOffers.reduce(
+    (sum, paymentOffer) => sum + (paymentOffer.delevryPrice || 0),
+    0
+  );
+  const rsult = {
+    ...rest,
+    totalPaymentsMoney: totalPaymentsProductsMoney + totalPaymentsOffersMoney,
+    totalDeleveryMoney: totalDeleverysProductsMoney + totalDeleverysOffersMoney,
+  };
   res
     .status(200)
-    .json({ message: "Journée arrêtée avec succès", day: updatedDay });
+    .json({ message: "Journée arrêtée avec succès", day: rsult });
 });
 
 export const getDaysWithPaymentsCount = asyncHandler(
