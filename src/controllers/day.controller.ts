@@ -213,8 +213,8 @@ export const getDaysWithPaymentsCount = asyncHandler(
       days: formatedResult,
       pagination: {
         page: cureentPage,
-        rowsPerPage: take ?? totalResult,
-        totalPages: take ? Math.ceil(totalResult / take) : 1,
+        rowsPerPage: take ?? totalFilterResult,
+        totalPages: take ? Math.ceil(totalFilterResult / take) : 1,
         totalResult,
         totalFilterResult,
       },
