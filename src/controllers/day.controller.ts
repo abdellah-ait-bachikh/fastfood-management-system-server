@@ -29,7 +29,8 @@ export const createDay = asyncHandler(async (req: Request, res: Response) => {
   const newDay = await db.day.create({
     data: {
       startAt: new Date(),
-    }, include: {
+    },
+    include: {
       paymentsOffers: true,
       paymentsProducts: true,
       _count: {
@@ -40,7 +41,7 @@ export const createDay = asyncHandler(async (req: Request, res: Response) => {
       },
     },
   });
-   const { paymentsProducts, paymentsOffers, ...rest } = newDay;
+  const { paymentsProducts, paymentsOffers, ...rest } = newDay;
   const totalPaymentsProductsMoney = paymentsProducts.reduce(
     (sum, paymentProduct) => sum + (paymentProduct.totalePrice || 0),
     0
@@ -62,9 +63,7 @@ export const createDay = asyncHandler(async (req: Request, res: Response) => {
     totalPaymentsMoney: totalPaymentsProductsMoney + totalPaymentsOffersMoney,
     totalDeleveryMoney: totalDeleverysProductsMoney + totalDeleverysOffersMoney,
   };
-  res
-    .status(201)
-    .json({ message: "Journée démarrée avec succès", day: rsult });
+  res.status(201).json({ message: "Journée démarrée avec succès", day: rsult });
 });
 
 export const stopDay = asyncHandler(async (req: Request, res: Response) => {
@@ -126,9 +125,7 @@ export const stopDay = asyncHandler(async (req: Request, res: Response) => {
     totalPaymentsMoney: totalPaymentsProductsMoney + totalPaymentsOffersMoney,
     totalDeleveryMoney: totalDeleverysProductsMoney + totalDeleverysOffersMoney,
   };
-  res
-    .status(200)
-    .json({ message: "Journée arrêtée avec succès", day: rsult });
+  res.status(200).json({ message: "Journée arrêtée avec succès", day: rsult });
 });
 
 export const getDaysWithPaymentsCount = asyncHandler(
@@ -221,3 +218,22 @@ export const getDaysWithPaymentsCount = asyncHandler(
     });
   }
 );
+
+export const deleteDay = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  if (isNaN(parseInt(id))) {
+    res.status(400).json({ message: "ID invalide" });
+    return;
+  }
+  const existDay = await db.day.findUnique({
+    where: { id: parseInt(id) },
+  });
+  if (!existDay) {
+    res.status(404).json({ message: "Journée introuvable" });
+    return;
+  }
+  await db.day.delete({
+    where: { id: parseInt(id) },
+  });
+  res.status(200).json({message:'Journée suprimer avec success'})
+});
