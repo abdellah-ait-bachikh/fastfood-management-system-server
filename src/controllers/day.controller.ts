@@ -315,3 +315,99 @@ export const deleteDay = asyncHandler(async (req: Request, res: Response) => {
     .status(200)
     .json({ message: "Journée suprimer avec success", days: formatedResult });
 });
+export const deleteManyDays = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  if (isNaN(parseInt(id))) {
+    res.status(400).json({ message: "ID invalide" });
+    return;
+  }
+  const existDay = await db.day.findUnique({
+    where: { id: parseInt(id) },
+  });
+  if (!existDay) {
+    res.status(404).json({ message: "Journée introuvable" });
+    return;
+  }
+  await db.day.delete({
+    where: { id: parseInt(id) },
+  });
+  const { page, rowsPerPage = "all", dateFilter = undefined } = req.query;
+  let from: Date | undefined;
+  let to: Date | undefined;
+
+  if (dateFilter && !isNaN(new Date(dateFilter as string).getTime())) {
+    const parseDate = new Date(dateFilter as string);
+    from = new Date(
+      parseDate.getFullYear(),
+      parseDate.getMonth(),
+      parseDate.getDate()
+    );
+    to = new Date(
+      parseDate.getFullYear(),
+      parseDate.getMonth(),
+      parseDate.getDate() + 1
+    );
+  }
+
+  const take = rowsPerPage
+    ? isNaN(parseInt(rowsPerPage as string))
+      ? undefined
+      : parseInt(rowsPerPage as string)
+    : undefined; //rows per page
+  const cureentPage = !isNaN(parseInt(page as string))
+    ? parseInt(page as string)
+    : 1;
+  const skip = take ? (cureentPage - 1) * take : undefined;
+
+  const totalResult = await db.day.count();
+  const totalFilterResult = await db.day.count({
+    where: from ? { startAt: { gte: from, lt: to } } : undefined,
+  });
+  const days = await db.day.findMany({
+    where: from ? { startAt: { gte: from, lt: to } } : undefined,
+    skip,
+    take,
+    include: {
+      paymentsOffers: true,
+      paymentsProducts: true,
+      _count: {
+        select: {
+          paymentsOffers: true,
+          paymentsProducts: true,
+        },
+      },
+    },
+    orderBy: {
+      startAt: "desc",
+    },
+  });
+  const formatedResult = days.map((day) => {
+    const { paymentsOffers, paymentsProducts, ...rest } = day;
+    const totalPaymentsProductsMoney = paymentsProducts.reduce(
+      (sum, paymentProduct) => sum + (paymentProduct.totalePrice || 0),
+      0
+    );
+    const totalPaymentsOffersMoney = paymentsOffers.reduce(
+      (sum, offer) => sum + (offer.totalePrice || 0),
+      0
+    );
+    const totalDeleverysProductsMoney = paymentsProducts.reduce(
+      (sum, paymentProduct) => sum + (paymentProduct.delevryPrice || 0),
+      0
+    );
+    const totalDeleverysOffersMoney = paymentsOffers.reduce(
+      (sum, paymentOffer) => sum + (paymentOffer.delevryPrice || 0),
+      0
+    );
+    return {
+      ...rest,
+      totalPaymentsMoney: totalPaymentsProductsMoney + totalPaymentsOffersMoney,
+      totalDeleveryMoney:
+        totalDeleverysProductsMoney + totalDeleverysOffersMoney,
+    };
+  });
+
+  res
+    .status(200)
+    .json({ message: "Journée suprimer avec success", days: formatedResult });
+});
