@@ -315,4 +315,3 @@ export const deleteDay = asyncHandler(async (req: Request, res: Response) => {
     .status(200)
     .json({ message: "Journée suprimer avec success", days: formatedResult });
 });
-
