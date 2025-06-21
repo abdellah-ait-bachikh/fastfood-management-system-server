@@ -29,7 +29,7 @@ const port = process.env.PORT;
 
 export const startServer = () => {
   app.listen(port, () => {
-    console.log(`server raning in port = ${port}`);
+    console.log(`server raning good in port = ${port}`);
   });
 };
 startServer();
